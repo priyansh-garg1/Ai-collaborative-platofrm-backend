@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import User from './models/User.js';
 
 // Load environment variables
 dotenv.config();
@@ -17,6 +18,9 @@ app.use(cors({
 
 // Middleware
 app.use(express.json());
+
+// Attach User model to app.locals
+app.locals.User = User;
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {

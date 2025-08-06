@@ -59,3 +59,37 @@ export const getProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, email, oldPassword, newPassword, confirmPassword } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Update name/email
+    if (name) user.name = name;
+    if (email) user.email = email;
+
+    // Password change logic
+    if (oldPassword || newPassword || confirmPassword) {
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({ message: 'All password fields are required' });
+      }
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Old password is incorrect' });
+      }
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: 'New passwords do not match' });
+      }
+      user.password = await bcrypt.hash(newPassword, 10);
+    }
+
+    await user.save();
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json(userObj);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
